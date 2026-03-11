@@ -53,7 +53,7 @@ def create_user():
   if User.query.filter_by(username=username).first():
     return jsonify({'message': 'Usuário já cadastrado'}), 400
 
-  new_user = User(username=username, password=password)
+  new_user = User(username=username, password=password, role='user')
   db.session.add(new_user)
   db.session.commit()
   return jsonify({'message': 'Uusuário criado com sucesso'})
