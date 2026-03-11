@@ -85,6 +85,9 @@ def update_user(id_user):
   if new_password == user.password:
     return jsonify({'message': 'Mesma senha fornecida anteriormente'}), 400
   
+  if id_user != current_user.id and current_user.role == 'user':
+    return jsonify({'message': 'Operação não permitida'}), 403
+  
   user.password = new_password
 
   db.session.commit()
@@ -100,6 +103,9 @@ def delete_user(id_user):
   
   if user.id == current_user.id:
     return jsonify({'message': 'Não é permitido deletar o próprio usuário'}), 403
+  
+  if current_user.role != 'admin':
+    return jsonify({'message': 'Operação não permitida'}), 403
   
   db.session.delete(user)
   db.session.commit()
