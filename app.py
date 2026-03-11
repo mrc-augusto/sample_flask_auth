@@ -80,13 +80,14 @@ def update_user(id_user):
   data = request.json
   new_password = data.get('password') 
 
-  if new_password and new_password != user.password:
-    user.password = new_password
-
-    db.session.commit()
-    return jsonify({'message': f'Usuário {user.username} atualizado com sucesso'})  
+  if new_password == user.password:
+    return jsonify({'message': 'Mesma senha fornecida anteriormente'}), 400
   
-  return jsonify({'message': 'Mesma senha fornecida anteriormente'}), 400
+  user.password = new_password
+
+  db.session.commit()
+  return jsonify({'message': f'Usuário {user.username} atualizado com sucesso'})  
+  
 
 @app.route('/user/<int:id_user>', methods=['DELETE'])
 @login_required
