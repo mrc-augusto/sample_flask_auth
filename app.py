@@ -75,16 +75,15 @@ def update_user(id_user):
     return jsonify({'message': 'Usuário não encontrado'}), 404
   
   data = request.json
-  username = data.get('username')
-  password = data.get('password')
+  new_password = data.get('password') 
 
-  if username:
-    user.username = username
-  if password:
-    user.password = password
+  if new_password and new_password != user.password:
+    user.password = new_password
 
-  db.session.commit()
-  return jsonify({'message': 'Usuário atualizado com sucesso'})  
+    db.session.commit()
+    return jsonify({'message': f'Usuário {user.username} atualizado com sucesso'})  
+  
+  return jsonify({'message': 'Mesma senha fornecida anteriormente'}), 400
 
 @app.route('/user/<int:id_user>', methods=['DELETE'])
 @login_required
@@ -96,7 +95,7 @@ def delete_user(id_user):
   
   db.session.delete(user)
   db.session.commit()
-  return jsonify({'message': 'Usuário deletado com sucesso'})
+  return jsonify({'message': f'Usuário {user.username} deletado com sucesso'})
 
 
 
