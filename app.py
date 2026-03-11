@@ -62,6 +62,9 @@ def create_user():
 def get_user(id_user):
   user = User.query.get(id_user)
 
+  if not user:
+    return jsonify({'message': 'Usuário não encontrado'}), 404
+
   if user:
     return {'username': user.username}
   return jsonify({'message': 'Usuário não encontrado'}), 404
