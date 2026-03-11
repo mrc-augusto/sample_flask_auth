@@ -97,6 +97,9 @@ def delete_user(id_user):
   if not user:
     return jsonify({'message': 'Usuário não encontrado'}), 404
   
+  if user.id == current_user.id:
+    return jsonify({'message': 'Não é permitido deletar o próprio usuário'}), 400
+  
   db.session.delete(user)
   db.session.commit()
   return jsonify({'message': f'Usuário {user.username} deletado com sucesso'})
