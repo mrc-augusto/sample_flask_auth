@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from models.user import User
 from database import db
 from flask_login import LoginManager, login_required, login_user, current_user, logout_user
+import bcrypt
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
@@ -29,7 +30,7 @@ def login():
   
   user = User.query.filter_by(username=username).first()
 
-  if user and user.password == password:
+  if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
     login_user(user)
     return jsonify({'message': 'Login bem sucedido'})
   return jsonify({'message': 'Credenciais inválidas'}), 400
@@ -53,7 +54,8 @@ def create_user():
   if User.query.filter_by(username=username).first():
     return jsonify({'message': 'Usuário já cadastrado'}), 400
 
-  new_user = User(username=username, password=password, role='user')
+  hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+  new_user = User(username=username, password=hashed_password.decode('utf-8'), role='user')
   db.session.add(new_user)
   db.session.commit()
   return jsonify({'message': 'Uusuário criado com sucesso'})
@@ -74,24 +76,26 @@ def get_user(id_user):
 @app.route('/user/<int:id_user>', methods=['PUT'])
 @login_required
 def update_user(id_user):
-  user = User.query.get(id_user)
+    user = User.query.get(id_user)
 
-  if not user:
-    return jsonify({'message': 'Usuário não encontrado'}), 404
-  
-  data = request.json
-  new_password = data.get('password') 
+    if not user:
+        return jsonify({'message': 'Usuário não encontrado'}), 404
 
-  if new_password == user.password:
-    return jsonify({'message': 'Mesma senha fornecida anteriormente'}), 400
-  
-  if id_user != current_user.id and current_user.role == 'user':
-    return jsonify({'message': 'Operação não permitida'}), 403
-  
-  user.password = new_password
+    data = request.json
+    new_password = data.get('password')
 
-  db.session.commit()
-  return jsonify({'message': f'Usuário {user.username} atualizado com sucesso'})  
+    # Verifica se a nova senha, quando criptografada, seria igual à atual
+    if bcrypt.checkpw(new_password.encode('utf-8'), user.password.encode('utf-8')):
+      return jsonify({'message': 'Mesma senha fornecida anteriormente'}), 400
+
+    if id_user != current_user.id and current_user.role == 'user':
+      return jsonify({'message': 'Operação não permitida'}), 403
+
+    hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+    user.password = hashed_password.decode('utf-8')
+
+    db.session.commit()
+    return jsonify({'message': f'Usuário {user.username} atualizado com sucesso'})
   
 @app.route('/user/<int:id_user>', methods=['DELETE'])
 @login_required
